@@ -1,22 +1,35 @@
 from bookkeeper.repository.memory_repository import MemoryRepository
+from bookkeeper.repository.sqlite_repository import SQLiteRepository
 
 import pytest
+from dataclasses import dataclass
 
 
 @pytest.fixture
 def custom_class():
-    class Custom():
-        pk = 0
+    @dataclass
+    class Custom:
+        pk: int = 0
 
     return Custom
 
 
 @pytest.fixture
-def repo():
-    return MemoryRepository()
+def repo(custom_class):
+    return MemoryRepository[custom_class]()
 
 
-def test_crud(repo, custom_class):
+@pytest.fixture
+def sqlite_repo(custom_class):
+    return SQLiteRepository[custom_class]('database.db', custom_class)
+
+
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_crud(rep, custom_class, request):
+    repo = request.getfixturevalue(rep)
     obj = custom_class()
     pk = repo.add(obj)
     assert obj.pk == pk
@@ -29,31 +42,56 @@ def test_crud(repo, custom_class):
     assert repo.get(pk) is None
 
 
-def test_cannot_add_with_pk(repo, custom_class):
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_cannot_add_with_pk(rep, custom_class, request):
+    repo = request.getfixturevalue(rep)
     obj = custom_class()
     obj.pk = 1
     with pytest.raises(ValueError):
         repo.add(obj)
 
 
-def test_cannot_add_without_pk(repo):
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_cannot_add_without_pk(rep, request):
+    repo = request.getfixturevalue(rep)
     with pytest.raises(ValueError):
         repo.add(0)
 
 
-def test_cannot_delete_unexistent(repo):
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_cannot_delete_unexistent(rep, request):
+    repo = request.getfixturevalue(rep)
     with pytest.raises(KeyError):
         repo.delete(1)
 
 
-def test_cannot_update_without_pk(repo, custom_class):
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_cannot_update_without_pk(rep, custom_class, request):
+    repo = request.getfixturevalue(rep)
     obj = custom_class()
     with pytest.raises(ValueError):
         repo.update(obj)
 
 
-def test_get_all(repo, custom_class):
-    objects = [custom_class() for i in range(5)]
+@pytest.mark.parametrize(
+    'rep',
+    ['repo', 'sqlite_repo']
+)
+def test_get_all(rep, custom_class, request):
+    repo = request.getfixturevalue(rep)
+    objects = [custom_class() for _ in range(5)]
     for o in objects:
         repo.add(o)
     assert repo.get_all() == objects
