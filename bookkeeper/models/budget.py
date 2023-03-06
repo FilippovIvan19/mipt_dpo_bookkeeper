@@ -14,5 +14,6 @@ class Budget:
     и сумму (amount)
     """
     duration: int
-    category: int
+    category: int | None
     amount: int
+    pk: int = 0

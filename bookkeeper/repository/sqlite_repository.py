@@ -3,6 +3,7 @@
 """
 
 import sqlite3
+from datetime import datetime
 from inspect import get_annotations
 from types import UnionType
 from typing import Any, get_args
@@ -31,12 +32,16 @@ class SQLiteRepository(AbstractRepository[T]):
             + f'{", ".join(definition_strings + ["pk INTEGER PRIMARY KEY"])}' \
             + ')'
 
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             cur.execute('PRAGMA foreign_keys = ON')
             cur.execute(f'DROP TABLE IF EXISTS {self.table_name}')
             cur.execute(create_sql)
         con.close()
+        
+    def connect(self):
+        return sqlite3.connect(
+            self.db_file, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 
     @staticmethod
     def _resolve_type(obj_type: type) -> str:
@@ -48,6 +53,8 @@ class SQLiteRepository(AbstractRepository[T]):
             return 'INTEGER'
         if issubclass(float, obj_type):
             return 'REAL'
+        if issubclass(datetime, obj_type):
+            return 'TIMESTAMP'
         return 'TEXT'
 
     def add(self, obj: T) -> int:
@@ -56,7 +63,7 @@ class SQLiteRepository(AbstractRepository[T]):
         names = ', '.join(self.fields.keys())
         place_holder = ', '.join("?" * len(self.fields))
         values = [getattr(obj, x) for x in self.fields]
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             if len(self.fields) != 0:
                 cur.execute(
@@ -66,13 +73,12 @@ class SQLiteRepository(AbstractRepository[T]):
             else:  # specific case for table with only pk column
                 cur.execute(f'INSERT INTO {self.table_name} DEFAULT VALUES')
             pk = cur.lastrowid
-            print('lastrowid', pk)
             obj.pk = pk if pk is not None else 0
         con.close()
         return obj.pk
 
     def get(self, pk: int) -> T | None:
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             cur.execute(
                 f'SELECT * FROM {self.table_name} WHERE pk = ?',
@@ -83,14 +89,13 @@ class SQLiteRepository(AbstractRepository[T]):
         return self.cls(*res[0]) if len(res) != 0 else None
 
     def get_all(self, where: dict[str, Any] | None = None) -> list[T]:
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             cur.execute(
                 f'SELECT * FROM {self.table_name}'
             )
             res = cur.fetchall()
         con.close()
-        print(*res, sep='\n')
         res = [self.cls(*obj) for obj in res]
         if where is not None:
             res = [obj for obj in res
@@ -104,7 +109,7 @@ class SQLiteRepository(AbstractRepository[T]):
         if len(update_strings) == 0:
             return
         values = [getattr(obj, x) for x in self.fields]
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             cur.execute(
                 f'UPDATE {self.table_name} SET {", ".join(update_strings)} WHERE pk = ?',
@@ -113,7 +118,7 @@ class SQLiteRepository(AbstractRepository[T]):
         con.close()
 
     def delete(self, pk: int) -> None:
-        with sqlite3.connect(self.db_file) as con:
+        with self.connect() as con:
             cur = con.cursor()
             cur.execute(
                 f'DELETE FROM {self.table_name} WHERE pk = ?',

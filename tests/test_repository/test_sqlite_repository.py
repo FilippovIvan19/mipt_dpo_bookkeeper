@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from bookkeeper.repository.sqlite_repository import SQLiteRepository
 
 import pytest
@@ -37,6 +39,7 @@ def test_resolve_type(repo):
     assert repo._resolve_type(type(1)) == 'INTEGER'
     assert repo._resolve_type(type(1.23)) == 'REAL'
     assert repo._resolve_type(type([])) == 'TEXT'
+    assert repo._resolve_type(type(datetime.now())) == 'TIMESTAMP'
     assert repo._resolve_type(type(int | None)) == 'TEXT'
 
 
