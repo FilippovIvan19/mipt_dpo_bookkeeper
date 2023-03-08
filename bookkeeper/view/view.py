@@ -10,11 +10,11 @@ from bookkeeper.view.main_window import MainWindow
 
 
 class View(AbstractView):
-    def __init__(self):
+    def __init__(self) -> None:
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = MainWindow()
 
-    def run(self):
+    def run(self) -> None:
         self.window.show()
         sys.exit(self.app.exec())
 

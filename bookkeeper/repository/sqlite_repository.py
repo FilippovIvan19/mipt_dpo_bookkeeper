@@ -5,6 +5,7 @@
 import sqlite3
 from datetime import datetime
 from inspect import get_annotations
+from sqlite3 import Connection
 from types import UnionType
 from typing import Any, get_args
 
@@ -37,8 +38,8 @@ class SQLiteRepository(AbstractRepository[T]):
             cur.execute('PRAGMA foreign_keys = ON')
             cur.execute(create_sql)
         con.close()
-        
-    def connect(self):
+
+    def connect(self) -> Connection:
         return sqlite3.connect(
             self.db_file, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 
@@ -95,7 +96,7 @@ class SQLiteRepository(AbstractRepository[T]):
             )
             res = cur.fetchall()
         con.close()
-        res = [self.cls(*obj) for obj in res]
+        res: list[T] = [self.cls(*obj) for obj in res]
         if where is not None:
             res = [obj for obj in res
                    if all(getattr(obj, attr) == value for attr, value in where.items())]

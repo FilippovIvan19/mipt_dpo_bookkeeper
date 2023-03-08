@@ -16,20 +16,20 @@ class MainWindow(QtWidgets.QMainWindow):
     WEEK = 7
     MONTH = 30
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.category_id_name_mapping: dict[int, str] = dict()
         self.category_name_id_mapping: dict[str, int] = dict()
         self.categories: list[Category] = []
         self.budgets: list[Budget] = []
         self.expenses: list[Expense] = []
-        self.category_creator: Callable[[Category], None] = lambda x: None
+        self.category_creator: Callable[[Category], int] = lambda x: -1
         self.category_updater: Callable[[Category], None] = lambda x: None
         self.category_deleter: Callable[[int], None] = lambda x: None
-        self.budget_creator: Callable[[Budget], None] = lambda x: None
+        self.budget_creator: Callable[[Budget], int] = lambda x: -1
         self.budget_updater: Callable[[Budget], None] = lambda x: None
         self.budget_deleter: Callable[[int], None] = lambda x: None
-        self.expense_creator: Callable[[Expense], None] = lambda x: None
+        self.expense_creator: Callable[[Expense], int] = lambda x: -1
         self.expense_updater: Callable[[Expense], None] = lambda x: None
         self.expense_deleter: Callable[[int], None] = lambda x: None
 
@@ -79,47 +79,47 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.budget_table.table.itemChanged.connect(self.on_budget_item_changed)
 
-    def activate_expense_editing_mode(self, row_index: int):
+    def activate_expense_editing_mode(self, row_index: int) -> None:
         self.expenses_table.set_edit_buttons_active(False)
         self.add_expense.activate_editing_mode(
             self.expenses[row_index],
             self.category_id_name_mapping[self.expenses[row_index].category])
 
-    def deactivate_expense_editing_mode(self):
+    def deactivate_expense_editing_mode(self) -> None:
         self.expenses_table.set_edit_buttons_active(True)
         self.add_expense.deactivate_editing_mode()
 
-    def delete_expense(self, pk: int):
+    def delete_expense(self, pk: int) -> None:
         self.expense_deleter(pk)
         self.deactivate_expense_editing_mode()
 
-    def update_expense(self, expense: Expense, cat: str):
+    def update_expense(self, expense: Expense, cat: str) -> None:
         expense.category = self.category_name_id_mapping[cat]
         self.expense_updater(expense)
         self.deactivate_expense_editing_mode()
 
-    def create_expense(self, expense: Expense, cat: str):
+    def create_expense(self, expense: Expense, cat: str) -> None:
         expense.category = self.category_name_id_mapping[cat]
         self.expense_creator(expense)
 
-    def activate_category_editing_mode(self, row_index: int):
+    def activate_category_editing_mode(self, row_index: int) -> None:
         self.category_table.set_edit_buttons_active(False)
         self.add_category.activate_editing_mode(
             self.categories[row_index])
 
-    def deactivate_category_editing_mode(self):
+    def deactivate_category_editing_mode(self) -> None:
         self.category_table.set_edit_buttons_active(True)
         self.add_category.deactivate_editing_mode()
 
-    def delete_category(self, pk: int):
+    def delete_category(self, pk: int) -> None:
         self.category_deleter(pk)
         self.deactivate_category_editing_mode()
 
-    def update_category(self, category: Category):
+    def update_category(self, category: Category) -> None:
         self.category_updater(category)
         self.deactivate_category_editing_mode()
 
-    def create_category(self, category: Category):
+    def create_category(self, category: Category) -> None:
         print('create_category')
         self.category_creator(category)
 
@@ -152,7 +152,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 month_ex += ex.amount
         self.budget_table.set_expenses([day_ex, week_ex, month_ex])
 
-    def on_budget_item_changed(self, item: QtWidgets.QTableWidgetItem):
+    def on_budget_item_changed(self, item: QtWidgets.QTableWidgetItem) -> None:
         old_budgets = self.budget_table.budgets
         if item.column() == 1 and item.text() != '':
             if old_budgets[item.row()] is None:

@@ -1,5 +1,8 @@
+import os
+
 from bookkeeper.repository.memory_repository import MemoryRepository
 from bookkeeper.repository.sqlite_repository import SQLiteRepository
+from tests.test_utils import DB_NAME
 
 import pytest
 from dataclasses import dataclass
@@ -21,7 +24,14 @@ def repo(custom_class):
 
 @pytest.fixture
 def sqlite_repo(custom_class):
-    return SQLiteRepository[custom_class]('database.db', custom_class)
+    return SQLiteRepository[custom_class](DB_NAME, custom_class)
+
+
+@pytest.fixture(scope='class', autouse=True)
+def remove_db_file():
+    yield
+    if os.path.exists(DB_NAME):
+        os.remove(DB_NAME)
 
 
 @pytest.mark.parametrize(

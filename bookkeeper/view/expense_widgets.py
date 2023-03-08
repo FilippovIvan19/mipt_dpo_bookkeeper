@@ -8,7 +8,7 @@ from bookkeeper.view.accessory_widgets import EditButton, DateWidget
 class ExpensesWidget(QtWidgets.QWidget):
     activate_editing_mode_signal = QtCore.Signal(int)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.expenses: list[Expense] = []
         self.table = QtWidgets.QTableWidget(20, 5)
@@ -28,11 +28,13 @@ class ExpensesWidget(QtWidgets.QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-    def set_data(self, expenses: list[Expense], category_id_name_mapping: dict[int, str]):
+    def set_data(self, expenses: list[Expense],
+                 category_id_name_mapping: dict[int, str]) -> None:
         self.expenses = expenses
         self.table.setRowCount(len(expenses))
         for i, exp in enumerate(expenses):
-            self.table.setCellWidget(i, 0, EditButton(i, self.activate_editing_mode_signal))
+            self.table.setCellWidget(i, 0,
+                                     EditButton(i, self.activate_editing_mode_signal))
             self.table.setItem(i, 1, QtWidgets.QTableWidgetItem(
                 str(exp.expense_date.date())))
             self.table.setItem(i, 2, QtWidgets.QTableWidgetItem(str(exp.amount)))
@@ -40,7 +42,7 @@ class ExpensesWidget(QtWidgets.QWidget):
                 category_id_name_mapping[exp.category]))
             self.table.setItem(i, 4, QtWidgets.QTableWidgetItem(exp.comment))
 
-    def set_edit_buttons_active(self, is_active: bool):
+    def set_edit_buttons_active(self, is_active: bool) -> None:
         for i in range(self.table.rowCount()):
             self.table.cellWidget(i, 0).setDisabled(not is_active)
 
@@ -51,7 +53,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
     update_signal = QtCore.Signal(Expense, str)
     create_signal = QtCore.Signal(Expense, str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.cur_expense: Expense | None = None
         layout = QtWidgets.QVBoxLayout(self)
@@ -111,7 +113,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
         layout.addLayout(self.buttons_placeholder)
         self.buttons_placeholder.addWidget(self.add_button)
 
-    def exec_create(self):
+    def exec_create(self) -> None:
         if self.sum_input.text() == '' or not self.sum_input.text().isnumeric():
             return
         exp = Expense(amount=int(self.sum_input.text()),
@@ -120,7 +122,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
                       comment=self.comment_input.text())
         self.create_signal.emit(exp, self.cat_input.currentText())
 
-    def exec_update(self):
+    def exec_update(self) -> None:
         if self.sum_input.text() == '' or not self.sum_input.text().isnumeric():
             return
         self.cur_expense.amount = int(self.sum_input.text())
@@ -128,7 +130,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
         self.cur_expense.expense_date = self.date_input.dateTime().toPython()
         self.update_signal.emit(self.cur_expense, self.cat_input.currentText())
 
-    def activate_editing_mode(self, expense: Expense, cat_name: str):
+    def activate_editing_mode(self, expense: Expense, cat_name: str) -> None:
         self.cur_expense = expense
         self.sum_input.setText(str(expense.amount))
         self.cat_input.setCurrentText(cat_name)
@@ -139,7 +141,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
         self.buttons_placeholder.itemAt(0).widget().setParent(None)
         self.buttons_placeholder.addLayout(self.edit_buttons_layout)
 
-    def deactivate_editing_mode(self):
+    def deactivate_editing_mode(self) -> None:
         self.cur_expense = None
         self.buttons_placeholder.itemAt(0).layout().setParent(None)
         self.buttons_placeholder.addWidget(self.add_button)
@@ -148,4 +150,3 @@ class AddExpensesWidget(QtWidgets.QWidget):
         self.cat_input.setCurrentIndex(0)
         self.comment_input.clear()
         self.date_input.setDate(QtCore.QDate.currentDate())
-

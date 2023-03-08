@@ -8,7 +8,7 @@ from bookkeeper.view.accessory_widgets import EditButton
 class CategoryWidget(QtWidgets.QWidget):
     activate_editing_mode_signal = QtCore.Signal(int)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.table = QtWidgets.QTableWidget(20, 4)
 
@@ -25,15 +25,16 @@ class CategoryWidget(QtWidgets.QWidget):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-    def set_data(self, categories: list[Category]):
+    def set_data(self, categories: list[Category]) -> None:
         self.table.setRowCount(len(categories))
         for i, cat in enumerate(categories):
-            self.table.setCellWidget(i, 0, EditButton(i, self.activate_editing_mode_signal))
+            self.table.setCellWidget(i, 0,
+                                     EditButton(i, self.activate_editing_mode_signal))
             self.table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(cat.pk)))
             self.table.setItem(i, 2, QtWidgets.QTableWidgetItem(str(cat.parent)))
             self.table.setItem(i, 3, QtWidgets.QTableWidgetItem(cat.name))
 
-    def set_edit_buttons_active(self, is_active: bool):
+    def set_edit_buttons_active(self, is_active: bool) -> None:
         for i in range(self.table.rowCount()):
             self.table.cellWidget(i, 0).setDisabled(not is_active)
 
@@ -44,7 +45,7 @@ class AddCategoryWidget(QtWidgets.QWidget):
     update_signal = QtCore.Signal(Category)
     create_signal = QtCore.Signal(Category)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.cur_category: Category | None = None
         layout = QtWidgets.QVBoxLayout(self)
@@ -88,7 +89,7 @@ class AddCategoryWidget(QtWidgets.QWidget):
         layout.addLayout(self.buttons_placeholder)
         self.buttons_placeholder.addWidget(self.add_button)
 
-    def exec_create(self):
+    def exec_create(self) -> None:
         if self.name_input.text() == '' or (
                 self.parent_input.text() != '' and
                 not self.parent_input.text().isnumeric()):
@@ -97,7 +98,7 @@ class AddCategoryWidget(QtWidgets.QWidget):
         cat = Category(self.name_input.text(), parent)
         self.create_signal.emit(cat)
 
-    def exec_update(self):
+    def exec_update(self) -> None:
         if self.name_input.text() == '' or (
                 self.parent_input.text() != '' and
                 not self.parent_input.text().isnumeric()):
@@ -107,7 +108,7 @@ class AddCategoryWidget(QtWidgets.QWidget):
         self.cur_category.name = self.name_input.text()
         self.update_signal.emit(self.cur_category)
 
-    def activate_editing_mode(self, category: Category):
+    def activate_editing_mode(self, category: Category) -> None:
         self.cur_category = category
         self.name_input.setText(category.name)
         parent = str(category.parent) if category.parent is not None else ''
@@ -115,7 +116,7 @@ class AddCategoryWidget(QtWidgets.QWidget):
         self.buttons_placeholder.itemAt(0).widget().setParent(None)
         self.buttons_placeholder.addLayout(self.edit_buttons_layout)
 
-    def deactivate_editing_mode(self):
+    def deactivate_editing_mode(self) -> None:
         self.cur_category = None
         self.buttons_placeholder.itemAt(0).layout().setParent(None)
         self.buttons_placeholder.addWidget(self.add_button)
