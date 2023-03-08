@@ -1,9 +1,11 @@
+import os
+
 from bookkeeper.models.budget import Budget
 from bookkeeper.models.category import Category
 from bookkeeper.models.expense import Expense
 from bookkeeper.repository.abstract_repository import AbstractRepository
 from bookkeeper.repository.sqlite_repository import SQLiteRepository
-from bookkeeper.utils import read_tree
+from bookkeeper.utils import read_tree, INIT_CATEGORIES, DB_NAME
 from bookkeeper.view.abstract_view import AbstractView
 from bookkeeper.view.view import View
 
@@ -28,6 +30,14 @@ class Bookkeeper:
 
         self.view.register_budget_updater(self.budget_repo.update)
         self.view.register_budget_creator(self.budget_repo.add)
+
+    def init_db(self):
+        Category.create_from_tree(read_tree(INIT_CATEGORIES), self.category_repo)
+        self.expense_repo.add(Expense(120, 1, comment='comment1'))
+        self.expense_repo.add(Expense(900, 7, comment='comment2'))
+        # bud_repo.add(Budget(1, None, 1000))
+        self.budget_repo.add(Budget(7, None, 7000))
+        self.budget_repo.add(Budget(30, None, 30000))
 
     def run(self):
         self.view.set_category_list(self.category_repo.get_all())
@@ -62,29 +72,15 @@ class Bookkeeper:
         return pk
 
 
-cats = '''
-продукты
-    мясо
-        сырое мясо
-        мясные продукты
-    сладости
-книги
-одежда
-'''.splitlines()
+db_init_needed = not os.path.isfile(DB_NAME)
 
 view = View()
-cat_repo = SQLiteRepository[Category]('database.db', Category)
-exp_repo = SQLiteRepository[Expense]('database.db', Expense)
-bud_repo = SQLiteRepository[Budget]('database.db', Budget)
+cat_repo = SQLiteRepository[Category](DB_NAME, Category)
+exp_repo = SQLiteRepository[Expense](DB_NAME, Expense)
+bud_repo = SQLiteRepository[Budget](DB_NAME, Budget)
 
 bk = Bookkeeper(view, cat_repo, exp_repo, bud_repo)
-
-Category.create_from_tree(read_tree(cats), bk.category_repo)
-exp_repo.add(Expense(120, 1, comment='comment1'))
-exp_repo.add(Expense(900, 7, comment='comment2'))
-# bud_repo.add(Budget(1, None, 1000))
-bud_repo.add(Budget(7, None, 7000))
-bud_repo.add(Budget(30, None, 30000))
-
+if db_init_needed:
+    bk.init_db()
 
 bk.run()

@@ -35,7 +35,6 @@ class SQLiteRepository(AbstractRepository[T]):
         with self.connect() as con:
             cur = con.cursor()
             cur.execute('PRAGMA foreign_keys = ON')
-            cur.execute(f'DROP TABLE IF EXISTS {self.table_name}')
             cur.execute(create_sql)
         con.close()
         
