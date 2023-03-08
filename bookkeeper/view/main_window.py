@@ -7,6 +7,7 @@ from bookkeeper.models.budget import Budget
 from bookkeeper.models.category import Category
 from bookkeeper.models.expense import Expense
 from bookkeeper.view.accessory_widgets import BudgetWidget
+from bookkeeper.view.category_widgets import CategoryWidget, AddCategoryWidget
 from bookkeeper.view.expense_widgets import ExpensesWidget, AddExpensesWidget
 
 
@@ -42,9 +43,9 @@ class MainWindow(QtWidgets.QMainWindow):
         tabs.resize(self.size())
 
         main_tab = QtWidgets.QWidget()
-        # self.category_table = CategoryWidget()
+        category_tab = QtWidgets.QWidget()
         tabs.addTab(main_tab, "Траты")
-        # tabs.addTab(self.category_table, "Категории")
+        tabs.addTab(category_tab, "Категории")
 
         main_layout = QtWidgets.QVBoxLayout(main_tab)
         self.expenses_table = ExpensesWidget()
@@ -55,12 +56,26 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout.addWidget(self.budget_table)
         main_layout.addWidget(self.add_expense)
 
+        category_layout = QtWidgets.QVBoxLayout(category_tab)
+        self.category_table = CategoryWidget()
+        self.add_category = AddCategoryWidget()
+
+        category_layout.addWidget(self.category_table)
+        category_layout.addWidget(self.add_category)
+
         self.expenses_table.activate_editing_mode_signal.connect(
             self.activate_expense_editing_mode)
         self.add_expense.cancel_signal.connect(self.deactivate_expense_editing_mode)
         self.add_expense.delete_signal.connect(self.delete_expense)
         self.add_expense.update_signal.connect(self.update_expense)
         self.add_expense.create_signal.connect(self.create_expense)
+
+        self.category_table.activate_editing_mode_signal.connect(
+            self.activate_category_editing_mode)
+        self.add_category.cancel_signal.connect(self.deactivate_category_editing_mode)
+        self.add_category.delete_signal.connect(self.delete_category)
+        self.add_category.update_signal.connect(self.update_category)
+        self.add_category.create_signal.connect(self.create_category)
 
         self.budget_table.table.itemChanged.connect(self.on_budget_item_changed)
 
@@ -87,13 +102,34 @@ class MainWindow(QtWidgets.QMainWindow):
         expense.category = self.category_name_id_mapping[cat]
         self.expense_creator(expense)
 
+    def activate_category_editing_mode(self, row_index: int):
+        self.category_table.set_edit_buttons_active(False)
+        self.add_category.activate_editing_mode(
+            self.categories[row_index])
+
+    def deactivate_category_editing_mode(self):
+        self.category_table.set_edit_buttons_active(True)
+        self.add_category.deactivate_editing_mode()
+
+    def delete_category(self, pk: int):
+        self.category_deleter(pk)
+        self.deactivate_category_editing_mode()
+
+    def update_category(self, category: Category):
+        self.category_updater(category)
+        self.deactivate_category_editing_mode()
+
+    def create_category(self, category: Category):
+        print('create_category')
+        self.category_creator(category)
+
     def set_category_list(self, categories: list[Category]) -> None:
         self.categories = categories
         self.category_id_name_mapping = {c.pk: c.name for c in categories}
         self.category_name_id_mapping = {c.name: c.pk for c in categories}
         self.add_expense.cat_input.clear()
         self.add_expense.cat_input.addItems([c.name for c in categories])
-        # self.category_table.set_data(categories)
+        self.category_table.set_data(categories)
 
     def set_budget_list(self, budgets: list[Budget]) -> None:
         self.budgets = budgets

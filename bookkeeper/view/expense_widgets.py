@@ -112,7 +112,7 @@ class AddExpensesWidget(QtWidgets.QWidget):
         self.buttons_placeholder.addWidget(self.add_button)
 
     def exec_create(self):
-        if self.sum_input.text() == '':
+        if self.sum_input.text() == '' or not self.sum_input.text().isnumeric():
             return
         exp = Expense(amount=int(self.sum_input.text()),
                       category=0,
@@ -121,6 +121,8 @@ class AddExpensesWidget(QtWidgets.QWidget):
         self.create_signal.emit(exp, self.cat_input.currentText())
 
     def exec_update(self):
+        if self.sum_input.text() == '' or not self.sum_input.text().isnumeric():
+            return
         self.cur_expense.amount = int(self.sum_input.text())
         self.cur_expense.comment = self.comment_input.text()
         self.cur_expense.expense_date = self.date_input.dateTime().toPython()
